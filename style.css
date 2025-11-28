@@ -134,9 +134,17 @@ body {
 
 .table-input {
     background-color: #32303D;
+    color: #D7D4C4;
     border: #D7D4C4 solid 1px;
     border-radius: 4px;
     margin: 2px;
     padding: 8px;
     font-size: 14px;
+}
+
+.record-entry {
+    color: #D7D4C4;
+    border: 1px solid #D7D4C4;
+    border-radius: 4px;
+    padding: 10px;
 }
