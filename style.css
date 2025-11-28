@@ -125,3 +125,7 @@ body {
     color: #D7D4C4;
     
 }
+
+.record-added {
+    display: None;
+}
