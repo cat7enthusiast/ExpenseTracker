@@ -117,15 +117,26 @@ body {
     border: 2px solid white;
     margin: auto;
     padding: 8px;
+    border-radius: 8px;
 }
 
 .table-header {
     border: 2px dashed white;
     padding: 12px;
     color: #D7D4C4;
+    border-radius: 4px;
     
 }
 
 .record-added {
-    display: None;
+    display: none;
+}
+
+.table-input {
+    background-color: #32303D;
+    border: #D7D4C4 solid 1px;
+    border-radius: 4px;
+    margin: 2px;
+    padding: 8px;
+    font-size: 14px;
 }
