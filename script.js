@@ -10,7 +10,12 @@ trackButton.addEventListener("click", () => {
     document.getElementById("table-buttons-div").style.display = "inline";
     document.getElementById("no-table-div").remove();
     initialiseTable();
-    setupAddButton();
+    let expenseTable = document.getElementById("expense-table");
+
+    setupAddButton(expenseTable);
+    setupDeleteButton(expenseTable);
+    setupFilterButton(expenseTable);
+    setupSummaryButton(expenseTable);
 });
 
 function initialiseTable() {
@@ -39,9 +44,8 @@ function initialiseTable() {
     }
 }
 
-function setupAddButton() {
+function setupAddButton(tableElement) {
     const addButton = document.getElementById("add-button");
-    let tableElement = document.getElementById("expense-table");
     
     createInputRow(tableElement);
     inputRowExists = true;
@@ -183,4 +187,98 @@ function constructTable(parentTable) {
         
         parentTable.appendChild(entryRecord);
     }
+}
+
+function setupDeleteButton(tableElement) {
+    document.getElementById("delete-button").addEventListener("click", () => {
+        /* all td fields in each tr div
+            needs input checkbox in each
+            if 'change' and this.checked, delete
+            have exit button
+        */
+        if (recordsAreEmpty("delete")) {
+            return;
+        }
+
+        const tableHeaders = tableElement.querySelector("tr");
+        if (!tableHeaders.querySelector(".delete-header")) {
+            const deleteHeader = document.createElement("th");
+            deleteHeader.className = "delete-header";
+            tableHeaders.insertBefore(deleteHeader, tableHeaders.firstChild);
+        }
+
+        const inputRow = document.getElementById("input-row");
+        if (inputRow && !inputRow.querySelector(".delete-input-cell")) {
+            const td = document.createElement("td");
+            td.className = "delete-input-cell";
+            inputRow.insertBefore(td, inputRow.firstChild);
+        }
+
+        tableElement.querySelectorAll(".table-record").forEach(record => {
+            if (!record.querySelector(".delete-checkbox")){
+                const td = document.createElement("td");
+                const checkBox = document.createElement("input");
+                checkBox.type = "checkbox";
+                checkBox.className = "delete-checkbox";
+                td.appendChild(checkBox);
+                record.insertBefore(td, record.firstChild);
+
+                checkBox.addEventListener("change", function() {
+                    record.classList.toggle("unwanted-record", this.checked);
+
+                    if (this.checked && !document.querySelector("#clear-button"))  {
+                        
+                        console.log(`${this} checked`);
+                        record.classList.add("unwanted-record");
+
+                        if (document.querySelector("#clear-button")) {
+                            console.log("clear button found, exiting function");
+                            return;
+                        }
+                        let button = makeClearButton(document.getElementById("table-buttons-div"))
+                        button.addEventListener("click", () => {
+                            document.querySelectorAll(".unwanted-record").forEach(e => e.remove());
+                            if (!document.querySelectorAll("unwanted-record").length) {
+                                button.remove();
+                            }
+                        });
+
+                    }
+                })
+            }
+        });
+    
+
+    });
+
+}
+
+function makeClearButton(parentDiv) {
+    const clearButton = document.createElement("button");
+    clearButton.type = "button";
+    clearButton.textContent = "Clear selected";
+    clearButton.className = "table-button";
+    clearButton.id = "clear-button";
+    parentDiv.appendChild(clearButton);
+    return clearButton;
+}
+
+function setupFilterButton(tableElement) {
+    document.getElementById("filter-button").addEventListener("click", () => {
+        if (recordsAreEmpty("filter")) return;
+    });
+}
+
+function setupSummaryButton(tableElement) {
+    document.getElementById("summary-button").addEventListener("click", () => {
+        if (recordsAreEmpty("summarise")) return;
+    });
+}
+
+function recordsAreEmpty(action) {
+    if (!document.getElementById("expense-table").querySelectorAll(".table-record").length) {
+        alert (`Nothing to ${action}`);
+        return true;
+    }
+    return false;
 }
