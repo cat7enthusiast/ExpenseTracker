@@ -134,18 +134,23 @@ function clearInputFields() {
 function getJson(recordArray, headersArray) {
     /* Returns the parsed record array into a json with the table headers as the keys 
     also adds it to global array 'tableEntries' */
-    let recordObject = {};
-    for (let i = 0; i < headersArray.length; i++) {
-        recordObject[headersArray[i]] = recordArray[i];
+
+    let entryData = {};
+    for (let i = 0; i < headersArray.length+1; i++) {
+        entryData[headersArray[i]] = recordArray[i];
+        if (i === 4) {
+            entryData["Timestamp"] = new Date().toUTCString;
+        }
     }
     
-    if (Object.values(recordObject).length !== 4) {
+    if (Object.values(entryData).length !== 5) {
         console.log("JSON wasn't constructed properly for data record");
         return;
     }
     
-    tableEntries.push(recordObject);
-    return recordObject;
+    /* TODO: instead of appending to array, api call will go here*/
+    tableEntries.push(entryData);
+    return entryData;
 }
 
 function constructRow(dataJson, parentTable) {
@@ -154,7 +159,7 @@ function constructRow(dataJson, parentTable) {
     record.className = "table-record";
     let values = Object.values(dataJson);
     
-    for (let i = 0; i < values.length; i++) {
+    for (let i = 0; i < values.length-1; i++) {
         let field = document.createElement("td");
         field.textContent = values[i];
         field.className = "record-entry";
@@ -190,12 +195,9 @@ function constructTable(parentTable) {
 }
 
 function setupDeleteButton(tableElement) {
+    /* Creates a checkbox for each record that then creates a clear button and deletes
+    the selected records from the table */
     document.getElementById("delete-button").addEventListener("click", () => {
-        /* all td fields in each tr div
-            needs input checkbox in each
-            if 'change' and this.checked, delete
-            have exit button
-        */
         if (recordsAreEmpty("delete")) {
             return;
         }
@@ -254,6 +256,7 @@ function setupDeleteButton(tableElement) {
 }
 
 function makeClearButton(parentDiv) {
+    /* creates the clear button when a user wants to delete a record */
     const clearButton = document.createElement("button");
     clearButton.type = "button";
     clearButton.textContent = "Clear selected";
