@@ -4,7 +4,7 @@ const trackButton = document.getElementById("track-button");
 
 let tableEntries = [];
 let inputRowExists = false;
-const tableHeaders = ["Description", "Cost", "Category"];
+const tableHeaders = ["ID", "Description", "Cost", "Category"];
 
 trackButton.addEventListener("click", () => {
     document.getElementById("table-buttons-div").style.display = "inline";
@@ -56,16 +56,20 @@ function setupAddButton(tableElement) {
 }
 
 function createInputRow(parentTable) {
-    /* Creates the input row for user to enter data */
-    
     let inputRow = document.createElement("tr");
     inputRow.id = "input-row";
 
-    for (let i = 0; i < 3; i++){
+    let idField = document.createElement("td");
+    idField.textContent = "";
+    idField.className = "id-placeholder record-entry"; 
+    inputRow.appendChild(idField);
+
+    const inputHeaders = ["Description", "Cost", "Category"];
+    for (let i = 0; i < inputHeaders.length; i++){
         let dataEntry = document.createElement("td");
         let dataInput = document.createElement("input");
         dataInput.className = "table-input";
-        dataInput.placeholder = tableHeaders[i];
+        dataInput.placeholder = inputHeaders[i];
         dataInput.id = `input-${i}`;
         
         dataEntry.appendChild(dataInput);
@@ -78,12 +82,12 @@ function createInputRow(parentTable) {
     }
     
     parentTable.appendChild(inputRow);
-    
     document.getElementById("input-0").focus();
 }
 
 async function saveCurrentEntry() {
     /* Saves the current input row data and creates a new record */
+    
     const dataArray = getRowEntry();
     
     if (dataArray.some(val => val.trim() === "")) {
@@ -91,8 +95,8 @@ async function saveCurrentEntry() {
         return;
     }
     
-    const tableHeaders = ["Description", "Cost", "Category"];
-    let jsonData = await getJson(dataArray, tableHeaders);
+    const apiHeaders = ["Description", "Cost", "Category"];
+    let jsonData = await getJson(dataArray, apiHeaders);
     if(!jsonData) return;
     
     let tableElement = document.getElementById("expense-table");
@@ -163,7 +167,7 @@ async function getJson(recordArray, headersArray) {
         }
 
         const createdExpense = await apiResponse.json();
-        console.log(`Created Expense: ${createdExpense}`);
+        console.log("Created Expense:,", createdExpense);
         return createdExpense;
 
     } catch (e) {
@@ -178,17 +182,18 @@ function constructRow(dataJson, parentTable) {
     /* Constructs a singular record to add to the current html table */
     let record = document.createElement("tr");
     record.className = "table-record";
-    let values = Object.values(dataJson);
     
-    for (let i = 0; i < values.length-1; i++) {
-        let field = document.createElement("td");
-        field.textContent = values[i];
-        field.className = "record-entry";
-        record.appendChild(field);
-    }
+    const orderedFields = ["id", "description", "cost", "category"];
+
+    orderedFields.forEach(field => {
+        let newField = document.createElement("td");
+        newField.textContent = dataJson[field] || "";
+        newField.className = "record-entry";
+        record.appendChild(newField);
+    })
     
-    if (record.querySelectorAll('td').length === 0 || record.querySelectorAll('td').length !== 3) {
-        console.log("All 3 fields for the record couldn't be constructed");
+    if (record.querySelectorAll('td').length === 0 || record.querySelectorAll('td').length !== 4) {
+        console.log("All 4 fields for the record couldn't be constructed");
         return;
     }
     
