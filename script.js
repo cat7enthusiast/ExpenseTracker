@@ -1,10 +1,12 @@
+const { createElement } = require("react");
+
 let tableFunctionalityDiv = document.getElementById("table-div");
 
 const trackButton = document.getElementById("track-button");
 
 let tableEntries = [];
 let inputRowExists = false;
-const tableHeaders = ["Description", "Cost", "Category", "Total"];
+const tableHeaders = ["Description", "Cost", "Category"];
 
 trackButton.addEventListener("click", () => {
     document.getElementById("table-buttons-div").style.display = "inline";
@@ -61,7 +63,7 @@ function createInputRow(parentTable) {
     let inputRow = document.createElement("tr");
     inputRow.id = "input-row";
 
-    for (let i = 0; i < 4; i++){
+    for (let i = 0; i < 3; i++){
         let dataEntry = document.createElement("td");
         let dataInput = document.createElement("input");
         dataInput.className = "table-input";
@@ -82,7 +84,7 @@ function createInputRow(parentTable) {
     document.getElementById("input-0").focus();
 }
 
-function saveCurrentEntry() {
+async function saveCurrentEntry() {
     /* Saves the current input row data and creates a new record */
     const dataArray = getRowEntry();
     
@@ -91,8 +93,9 @@ function saveCurrentEntry() {
         return;
     }
     
-    const tableHeaders = ["Description", "Cost", "Category", "Total"];
-    let jsonData = getJson(dataArray, tableHeaders);
+    const tableHeaders = ["Description", "Cost", "Category"];
+    let jsonData = await getJson(dataArray, tableHeaders);
+    if(!jsonData) return;
     
     let tableElement = document.getElementById("expense-table");
     constructRow(jsonData, tableElement);
@@ -105,7 +108,7 @@ function getRowEntry() {
     const dataArray = [];
     let inputFields = document.getElementsByClassName("table-input");
     
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 3; i++) {
         if (inputFields[i]) {
             let data = inputFields[i].value;
             dataArray.push(data);
@@ -131,26 +134,46 @@ function clearInputFields() {
     }
 }
 
-function getJson(recordArray, headersArray) {
+async function getJson(recordArray, headersArray) {
     /* Returns the parsed record array into a json with the table headers as the keys 
     also adds it to global array 'tableEntries' */
 
     let entryData = {};
-    for (let i = 0; i < headersArray.length+1; i++) {
+    for (let i = 0; i < headersArray.length; i++) {
         entryData[headersArray[i]] = recordArray[i];
-        if (i === 4) {
-            entryData["Timestamp"] = new Date().toUTCString;
-        }
     }
+    entryData["Timestamp"] = new Date().toUTCString();
     
-    if (Object.values(entryData).length !== 5) {
+    if (Object.values(entryData).length !== 4) {
         console.log("JSON wasn't constructed properly for data record");
         return;
     }
     
-    /* TODO: instead of appending to array, api call will go here*/
-    tableEntries.push(entryData);
-    return entryData;
+    try {
+        const apiResponse = await fetch("http://localhost:5171/api/Expense/entry",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(entryData)
+            }
+        );
+
+        if (!apiResponse.ok) {
+            throw new Error(`HTTP error: ${apiResponse.status}`);
+        }
+
+        const createdExpense = await apiResponse.json();
+        console.log(`Created Expense: ${createdExpense}`);
+        return createdExpense;
+
+    } catch (e) {
+        console.e(`ERROR: {e}`);
+        alert("Expense creation FAILED");
+        return;
+    }
+
 }
 
 function constructRow(dataJson, parentTable) {
@@ -166,8 +189,8 @@ function constructRow(dataJson, parentTable) {
         record.appendChild(field);
     }
     
-    if (record.querySelectorAll('td').length === 0 || record.querySelectorAll('td').length !== 4) {
-        console.log("All 4 fields for the record couldn't be constructed");
+    if (record.querySelectorAll('td').length === 0 || record.querySelectorAll('td').length !== 3) {
+        console.log("All 3 fields for the record couldn't be constructed");
         return;
     }
     
@@ -183,7 +206,7 @@ function constructTable(parentTable) {
         entryRecord.id = `entry-${i+1}`;
         let values = Object.values(tableEntries[i]);
         
-        for (let j = 0; j < 4; j++) {
+        for (let j = 0; j < 3; j++) {
             let field = document.createElement("td");
             field.className = "record-entry";
             field.textContent = values[j];
@@ -217,37 +240,37 @@ function setupDeleteButton(tableElement) {
         }
 
         tableElement.querySelectorAll(".table-record").forEach(record => {
-            if (!record.querySelector(".delete-checkbox")){
-                const td = document.createElement("td");
-                const checkBox = document.createElement("input");
-                checkBox.type = "checkbox";
-                checkBox.className = "delete-checkbox";
-                td.appendChild(checkBox);
-                record.insertBefore(td, record.firstChild);
+            if (record.querySelector(".delete-checkbox")) return;
+            const td = document.createElement("td");
+            const checkBox = document.createElement("input");
+            checkBox.type = "checkbox";
+            checkBox.className = "delete-checkbox";
+            td.appendChild(checkBox);
+            record.insertBefore(td, record.firstChild);
 
-                checkBox.addEventListener("change", function() {
-                    record.classList.toggle("unwanted-record", this.checked);
+            checkBox.addEventListener("change", function() {
+                record.classList.toggle("unwanted-record", this.checked);
 
-                    if (this.checked && !document.querySelector("#clear-button"))  {
-                        
-                        console.log(`${this} checked`);
-                        record.classList.add("unwanted-record");
+                if (this.checked && !document.querySelector("#clear-button"))  {
+                    
+                    console.log(`${this} checked`);
+                    record.classList.add("unwanted-record");
 
-                        if (document.querySelector("#clear-button")) {
-                            console.log("clear button found, exiting function");
-                            return;
-                        }
-                        let button = makeClearButton(document.getElementById("table-buttons-div"))
-                        button.addEventListener("click", () => {
-                            document.querySelectorAll(".unwanted-record").forEach(e => e.remove());
-                            if (!document.querySelectorAll("unwanted-record").length) {
-                                button.remove();
-                            }
-                        });
-
+                    if (document.querySelector("#clear-button")) {
+                        console.log("clear button found, exiting function");
+                        return;
                     }
-                })
-            }
+                    let button = makeClearButton(document.getElementById("table-buttons-div"))
+                    button.addEventListener("click", () => {
+                        document.querySelectorAll(".unwanted-record").forEach(e => e.remove());
+                        if (!document.querySelectorAll("unwanted-record").length) {
+                            checkBox.remove();
+                            document.querySelectorAll(".delete-checkbox").forEach(checkbox => checkbox.remove());
+                        }
+                    });
+
+                }
+            })
         });
     
 
@@ -269,6 +292,16 @@ function makeClearButton(parentDiv) {
 function setupFilterButton(tableElement) {
     document.getElementById("filter-button").addEventListener("click", () => {
         if (recordsAreEmpty("filter")) return;
+
+        const dateLabel = document.createElement("label");
+        dateLabel.textContent = "Load records from date:";
+        dateLabel.setAttribute("for", "date-filter");
+
+        const dateInput = document.createElement("input");
+        dateInput.type = "date";
+        dateInput.id = "date-filter";
+
+
     });
 }
 
