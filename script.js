@@ -1,5 +1,3 @@
-const { createElement } = require("react");
-
 let tableFunctionalityDiv = document.getElementById("table-div");
 
 const trackButton = document.getElementById("track-button");
@@ -169,7 +167,7 @@ async function getJson(recordArray, headersArray) {
         return createdExpense;
 
     } catch (e) {
-        console.e(`ERROR: {e}`);
+        console.error(`ERROR: ${e}`);
         alert("Expense creation FAILED");
         return;
     }
