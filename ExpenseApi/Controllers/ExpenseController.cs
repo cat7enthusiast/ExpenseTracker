@@ -16,7 +16,7 @@ namespace ExpenseTrackerApi.Controllers {
 
         [HttpGet("timestamp/{date}")]
         public async Task<ActionResult<IEnumerable<Expense>>> getExpenseByTimestamp(string date) {
-            var expenses = await _context.Expenses.Where (expenses => e.Timestamp == date).ToListAsync();
+            var expenses = await _context.Expenses.Where (e => e.Timestamp == date).ToListAsync();
             if (!expenses.Any()) {
                 return NotFound($"No expenses found for the date {date}");
             }
@@ -25,18 +25,18 @@ namespace ExpenseTrackerApi.Controllers {
 
         [HttpPost("entry")]
         public async Task<ActionResult<Expense>> CreateExpense (CreateExpenseDto dto) {
-            string newID;
+            string newId;
             do {
-                newID = Expense.GenerateId();
+                newId = Expense.GenerateId();
             }
             while (await _context.Expenses.AnyAsync(e => e.Id == newId));
 
             var expense = new Expense (
-                Id = newId,
-                Description = dto.Description,
-                Cost = dto.Cost,
-                Category = dto.Category,
-                Timestamp = dto.Timestamp
+                newId,
+                dto.Description,
+                dto.Cost,
+                dto.Category,
+                dto.Timestamp
             );
 
             _context.Expenses.Add(expense);
